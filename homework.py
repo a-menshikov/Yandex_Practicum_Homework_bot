@@ -40,18 +40,12 @@ handler.setFormatter(formatter)
 
 def check_tokens():
     """Проверяет наличие всех переменных окружения."""
-    if not PRACTICUM_TOKEN:
-        raise ValueError('Отсутствует обязательная переменная '
-                         'окружения: PRACTICUM_TOKEN.\n'
-                         'Работа программы остановлена.')
-    if not TELEGRAM_TOKEN:
-        raise ValueError('Отсутствует обязательная переменная '
-                         'окружения: TELEGRAM_TOKEN.\n'
-                         'Работа программы остановлена.')
-    if not TELEGRAM_CHAT_ID:
-        raise ValueError('Отсутствует обязательная переменная '
-                         'окружения: TELEGRAM_CHAT_ID.\n'
-                         'Работа программы остановлена.')
+    env_tokens = (PRACTICUM_TOKEN,
+                  TELEGRAM_CHAT_ID,
+                  TELEGRAM_TOKEN,
+                  )
+
+    return all(env_tokens)
 
 
 def send_message(bot, message):
@@ -89,12 +83,18 @@ def check_response(response):
 
     homework_value = response.get('homeworks')
     if not isinstance(homework_value, list):
-        raise TypeError(f'Значение по ключу homeworks не является списком'
-                        f'тип значения ключа {type(homework_value)}')
+        raise TypeError(f'Значение по ключу homeworks не является списком. '
+                        f'Тип значения ключа {type(homework_value)}')
 
     if not homework_value:
         raise IndexError('Список домашних работ пустой')
-    return homework_value[0]
+
+    last_homework = homework_value[0]
+    if not isinstance(last_homework, dict):
+        raise TypeError(f'Данные о последней работе не являются словарем. '
+                        f'Тип значения ключа {type(last_homework)}')
+
+    return last_homework
 
 
 def parse_status(homework):
@@ -119,14 +119,13 @@ def main():
     """Основная логика работы бота."""
     logger.debug('Бот запущен')
 
-    try:
-        check_tokens()
-    except ValueError as error:
-        logger.critical(f'Сбой в работе программы: {error}')
-        return
+    if not check_tokens():
+        logger.critical('Сбой в работе программы: '
+                        'недостаточно переменных окружения\n'
+                        'Работа программы остановлена.')
+        sys.exit()
 
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    prev_homework_message = ''
     last_message = ''
     timestamp = int(time.time())
 
@@ -134,20 +133,18 @@ def main():
         try:
             api_answer = get_api_answer(timestamp)
             last_homework = check_response(api_answer)
-            homework_message = parse_status(last_homework)
-            if homework_message != prev_homework_message:
-                send_message(bot, homework_message)
-                prev_homework_message = homework_message
-            else:
-                logger.debug('Статус последней домашки не изменился')
+            message = parse_status(last_homework)
         except Exception as error:
             logger.error(f'Сбой в работе программы: {error}')
             message = f'Сбой в работе программы: {error}'
+        finally:
             if message != last_message:
-                last_message = message
                 send_message(bot, message)
-
-        time.sleep(RETRY_PERIOD)
+                last_message = message
+            else:
+                logger.debug('Сообщение для отправки не изменилось, '
+                             'в телеграм ничего не отправлено')
+            time.sleep(RETRY_PERIOD)
 
 
 if __name__ == '__main__':
