@@ -4,9 +4,9 @@
 python-telegram-bot
 
 Также использовались
-python-dotenv
-requests
-logging
+python-dotenv,
+requests,
+logging.
 
 Все зависимости в файле
 pip install -r requirements.txt
