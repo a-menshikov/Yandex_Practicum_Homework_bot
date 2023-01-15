@@ -1,6 +1,7 @@
 """Телеграм-бот для проверки статуса домашнего задания."""
 
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 import sys
 import time
@@ -30,7 +31,8 @@ HOMEWORK_VERDICTS = {
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(stream=sys.stdout)
+handler = RotatingFileHandler('my_logger.log', maxBytes=50000000,
+                              backupCount=5)
 logger.addHandler(handler)
 formatter = logging.Formatter(
     '%(asctime)s - %(levelname)s - %(message)s'
