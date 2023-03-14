@@ -31,7 +31,7 @@ HOMEWORK_VERDICTS = {
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-handler = RotatingFileHandler('my_logger.log', maxBytes=50000000,
+handler = RotatingFileHandler('log/my_logger.log', maxBytes=50000000,
                               backupCount=5)
 logger.addHandler(handler)
 formatter = logging.Formatter(
@@ -46,7 +46,6 @@ def check_tokens():
                   TELEGRAM_CHAT_ID,
                   TELEGRAM_TOKEN,
                   )
-
     return all(env_tokens)
 
 

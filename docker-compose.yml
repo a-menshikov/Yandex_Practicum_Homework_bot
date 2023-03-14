@@ -1,0 +1,10 @@
+version: '3.0'
+
+services:
+  bot:
+    image: menshikovas/homework_bot:latest
+    working_dir: /bot
+    volumes:
+      - /mnt/e/DEV/yandex/homework_bot/log:/bot/log
+    restart: always
+    env_file: /mnt/e/DEV/yandex/.env
